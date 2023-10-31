@@ -2,7 +2,7 @@ import requests
 
 __all__ = ["parse_message", "send_message"]
 
-with open("/home/AwFaGi/bot/token.txt", 'r') as file:
+with open("token.txt", 'r') as file:
     TOKEN = file.read()
 
 

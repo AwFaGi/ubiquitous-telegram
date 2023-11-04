@@ -1,7 +1,7 @@
 import random
 
 from cock_controller import CockController
-from tg_utils import Message
+from tg_utils import *
 
 __all__ = ["process_command", "process_random_choice", "process_content"]
 cock_controller = CockController()
@@ -15,9 +15,11 @@ def start_func(message: Message):
 
 
 def help_func(message: Message):
-    s = "Для выбора текстовых значений, напиши их по одному в строке.\n" \
-        "<i>Фотографии пока недоступны</i>\n" + \
-        "\n".join([f"{i}: {bot_commands[i][1]}" for i in bot_commands.keys()])
+    s = (
+        "Для выбора текстовых значений, напиши их по одному в строке.\n\n"
+        "Поддерживается выбор рандомного стикера из стикерпака.\n\n"
+        "<i>Фотографии пока недоступны</i>\n\n"
+    ) + "\n".join([f"{i}: {bot_commands[i][1]}" for i in bot_commands.keys()])
 
     result = {
         'text': s
@@ -115,12 +117,30 @@ def process_random_choice(message: Message):
 def process_content(message: Message):
 
     if message.sticker() is not None:
-        text = f"Красивый стикер.\nЯ знаю, что он из пака: <code>{message.sticker()}</code>"
+        pack_name = message.sticker()
+
+        text = f"Красивое.\nВот тебе рандомный стикер из пака <code>{pack_name}</code>"
+        result = {
+            'text': text
+        }
+
+        message.send_message(**result)
+
+        stickers = StickerSet(pack_name)
+        sticker = random.choice(stickers.get_sticker_list())['file_id']
+
+        result = {
+            'sticker': sticker
+        }
+
+        message.send_sticker(**result)
+
     else:
         text = "Я не смог обработать Ваше сообщение"
+        result = {
+            'text': text
+        }
 
-    result = {
-        'text': text
-    }
+        message.send_message(**result)
 
-    message.send_message(**result)
+

@@ -1,44 +1,43 @@
 import random
 
 from cock_controller import CockController
-from tg_utils import send_message
+from tg_utils import Message
 
-
-__all__ = ["process_command", "process_random_choice"]
+__all__ = ["process_command", "process_random_choice", "process_content"]
 cock_controller = CockController()
 
 
-def start_func(chat_id, *args, **kwargs):
-    send_message(
-        chat_id,
-        "Привет! Я помогу тебе сделать выбор в трудной ситуации. Попробуй написать /help"
-    )
+def start_func(message: Message):
+    result = {
+        'text': "Привет! Я помогу тебе сделать выбор в трудной ситуации. Попробуй написать /help"
+    }
+    message.send_message(**result)
 
 
-def help_func(chat_id, *args, **kwargs):
+def help_func(message: Message):
     s = "Для выбора текстовых значений, напиши их по одному в строке.\n" \
         "<i>Фотографии пока недоступны</i>\n" + \
         "\n".join([f"{i}: {bot_commands[i][1]}" for i in bot_commands.keys()])
 
-    send_message(
-        chat_id,
-        s
-    )
+    result = {
+        'text': s
+    }
+    message.send_message(**result)
 
 
-def range_func(chat_id, *args, **kwargs):
+def range_func(message: Message):
+    args = message.text().split()[1:]
     try:
         arguments = list(map(int, args))
         if len(arguments) == 0:
-            send_message(
-                chat_id,
-                str(random.randrange(1, 101))
-            )
+            result = {
+                'text': str(random.randrange(1, 101))
+            }
         else:
-            send_message(
-                chat_id,
-                str(random.randrange(*arguments))
-            )
+            result = {
+                'text': str(random.randrange(*arguments))
+            }
+        message.send_message(**result)
     except Exception:
         s = (
             "<b>Произошла ошибка!</b>\n"
@@ -47,22 +46,24 @@ def range_func(chat_id, *args, **kwargs):
             "/range начало конец\n"
             "/range начало конец шаг\n"
         )
-        send_message(
-            chat_id,
-            s
-        )
+        result = {
+            'text': s
+        }
+        message.send_message(**result)
 
 
-def cock_func(chat_id, *args, **kwargs):
-    name = kwargs['name']
+def cock_func(message: Message):
+    name = message.full_name()
+    chat_id = message.chat_id()
+
     cock_size = cock_controller.get(chat_id)
-
     result_string = f"{name}, your cock is {cock_size} cm"
 
-    send_message(
-        chat_id,
-        result_string
-    )
+    result = {
+        'text': result_string
+    }
+
+    message.send_message(**result)
 
 
 bot_commands = {
@@ -77,17 +78,21 @@ bot_commands = {
 }
 
 
-def process_command(chat_id, text, name):
+def process_command(message: Message):
+    text = message.text()
+
     maybe_command = text.split()[0]
     if maybe_command in bot_commands:
         command = bot_commands[maybe_command][0]
-        command(chat_id, *text.split()[1:], name=name)
+        command(message)
         return True
     else:
         return False
 
 
-def process_random_choice(chat_id, text):
+def process_random_choice(message: Message):
+    text = message.text()
+
     variants = text.splitlines()
     cash = dict([(i, 0) for i in variants])
     for i in range(100):
@@ -100,7 +105,22 @@ def process_random_choice(chat_id, text):
         "</span>"
     )
 
-    send_message(
-        chat_id,
-        mes
-    )
+    result = {
+        'text': mes
+    }
+
+    message.send_message(**result)
+
+
+def process_content(message: Message):
+
+    if message.sticker() is not None:
+        text = f"Красивый стикер.\nЯ знаю, что он из пака: <code>{message.sticker()}</code>"
+    else:
+        text = "Я не смог обработать Ваше сообщение"
+
+    result = {
+        'text': text
+    }
+
+    message.send_message(**result)

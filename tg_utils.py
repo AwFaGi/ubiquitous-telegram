@@ -1,26 +1,42 @@
 import requests
 
-__all__ = ["parse_message", "send_message"]
+__all__ = ["Message"]
 
 with open("token.txt", 'r') as file:
     TOKEN = file.read()
 
-
-def parse_message(message):
-    real_message = message['message']
-    chat_id = real_message['chat']['id']
-    txt = real_message['text'] if 'text' in real_message else None
-    name = f"{real_message['from']['first_name']} {real_message['from']['last_name']}"
-    return chat_id, txt, name
+TELEGRAM_URL = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
 
 
-def send_message(chat_id, text):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-    payload = {
-        'chat_id': chat_id,
-        'text': text,
-        'parse_mode': "HTML"
-    }
+class Message:
+    def __init__(self, message):
+        self.message: dict = message
+        self.real_message: dict = message['message']
+        self._chat_id = self.real_message['chat']['id']
 
-    r = requests.post(url, json=payload)
-    return r
+    def text(self):
+        return self.real_message.get('text', None)
+
+    def chat_id(self):
+        return self._chat_id
+
+    def full_name(self):
+        return f"{self.real_message['from']['first_name']} {self.real_message['from']['last_name']}"
+
+    def username(self):
+        return self.real_message['from']['username']
+
+    def sticker(self):
+        sticker = self.real_message.get('sticker', None)
+        if 'sticker' is None:
+            return None
+        return sticker['set_name']
+
+    def send_message(self, **kwargs):
+        payload = {
+            'chat_id': self._chat_id,
+            'parse_mode': "HTML",
+            **kwargs
+        }
+        r = requests.post(TELEGRAM_URL, json=payload)
+        return r

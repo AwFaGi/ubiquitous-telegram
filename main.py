@@ -14,14 +14,15 @@ def index():
         msg = request.get_json()
         print(msg)
 
-        chat_id, txt, name = parse_message(msg)
+        message = Message(msg)
+        txt = message.text()
         if txt is None:
-            send_message(chat_id, "Я не смог обработать Ваше сообщение")
+            process_content(message)
             return Response('ok', status=200)
 
-        result = process_command(chat_id, txt, name)
+        result = process_command(message)
         if not result:
-            process_random_choice(chat_id, txt)
+            process_random_choice(message)
 
         return Response('ok', status=200)
 
